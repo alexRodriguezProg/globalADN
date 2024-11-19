@@ -9,11 +9,13 @@ Esto permite crear una matriz de ADN para realizar diversas operaciones, como de
 
 ## Estructura del proyecto
 
+```
 │
 ├── ejecutable.py           #Archivo principal con la función main
 ├── clases.py               # Contiene todas las clases del programa
 ├── README.md               # Documentación del proyecto
 └── img/                    # Carpeta que contiene las imágenes utilizadas  README.md
+```
 
 ## Ejemplo de uso
 
