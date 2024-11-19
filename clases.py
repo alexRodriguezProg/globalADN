@@ -23,12 +23,19 @@ class Detector:
 
         :return: True si hay mutaciones, False en caso contrario
         """
-        return (self.__detectar_horizontal(adn) or 
-                self.__detectar_vertical(adn) or 
-                self.__detectar_diagonal(adn))
+        return (self._detectar_horizontal(adn) or 
+                self._detectar_vertical(adn) or 
+                self._detectar_diagonal(adn))
     
 
-    def __detectar_horizontal(self, adn: list[str]) -> bool:
+    def _detectar_horizontal(self, adn: list[str]) -> bool:
+        
+        """
+        Verifica si existen secuencias mutantes en dirección horizontal en la matriz ADN.
+
+        :param adn: Lista de cadenas que representa la matriz ADN.
+        :return: True si se encuentra una mutación horizontal, False en caso contrario.
+        """
         
         cantidad_filas = len(adn)
         letras_por_filas = len(adn[0])
@@ -52,7 +59,14 @@ class Detector:
         return False
     
 
-    def __detectar_vertical(self, adn: list[str]) -> bool:
+    def _detectar_vertical(self, adn: list[str]) -> bool:
+
+        """
+        Verifica si existen secuencias mutantes en dirección vertical en la matriz ADN.
+
+        :param adn: Lista de cadenas que representa la matriz ADN.
+        :return: True si se encuentra una mutación vertical, False en caso contrario.
+        """
         cantidad_filas = len(adn)
         letras_por_filas = len(adn[0])
 
@@ -75,7 +89,15 @@ class Detector:
         return False 
     
     
-    def __detectar_diagonal(self, adn: list[str]) -> bool:
+    def _detectar_diagonal(self, adn: list[str]) -> bool:
+
+        """
+        Verifica si existen secuencias mutantes en dirección diagonal o diagonal inversa
+        en la matriz ADN.
+
+        :param adn: Lista de cadenas que representa la matriz ADN.
+        :return: True si se encuentra una mutación diagonal o diagonal inversa, False en caso contrario.
+        """
         cantidad_filas = len(adn)
         letras_por_filas = len(adn[0])
         
@@ -97,7 +119,7 @@ class Detector:
                     adn[f][c] == adn[f + 3][c - 3]):
                         self.columna_inicial = c
                         self.fila_inicial = f
-                        self.tipo_mutacion = "DIAGONAL"
+                        self.tipo_mutacion = "DIAGONAL INVERSA"
                         return True
         
         return False
@@ -116,6 +138,13 @@ class Sanador:
         self.adn_infectado = ""
 
     def sanar_mutantes(self, adn: list[str]) -> list[str]:
+        """
+        Genera un nuevo ADN sano reemplazando al existente si se detectan mutantes.
+        Itera generando matrices ADN aleatorias hasta que ninguna contenga mutaciones.
+
+        :param adn: Matriz ADN representada como lista de cadenas.
+        :return: Nueva matriz ADN sin mutaciones.
+        """
         base_nitrogenadas = ["A", "G", "C", "T"]
         adn_sano = []
         fila_adn = ""
@@ -164,45 +193,77 @@ class Radiacion(Mutador):
         super().__init__(base_nitrogenada, adn)
 
     def crear_mutante(self, base_nitrogenada: str, posicion_inicial: tuple[int, int], orientacion_de_la_mutacion: str) -> list[str]:
+        
+        """
+        Crea un mutante en la matriz ADN según la orientación especificada.
+
+        :param base_nitrogenada: Base nitrogenada para realizar la mutación.
+        :param posicion_inicial: Coordenadas (fila, columna) de inicio de la mutación.
+        :param orientacion_de_la_mutacion: Orientación de la mutación ('H' o 'V').
+        :return: Matriz ADN mutada como lista de cadenas.
+        """
         try:
             fila, columna = posicion_inicial
-
-            # Convertir la matriz a una lista de listas
+        
             adn = [list(fila_adn) for fila_adn in self.adn]
 
             if orientacion_de_la_mutacion == "H":
-                self.tipo_mutacion = "HORIZONTAL"
-                if 0 <= columna <= len(adn[fila]) - 4:  # Mutación hacia la derecha
-                    for i in range(4):
-                        adn[fila][columna + i] = base_nitrogenada
-                elif 3 <= columna < len(adn[fila]):  # Mutación hacia la izquierda
-                    for i in range(4):
-                        adn[fila][columna - i] = base_nitrogenada
-                else:
-                    raise IndexError("La mutación excede los límites de la matriz horizontalmente.")
-
+                adn = self._mutacion_horizontal(adn, base_nitrogenada, fila, columna)
             elif orientacion_de_la_mutacion == "V":
-                self.tipo_mutacion= "VERTICAL"
-                if 0 <= fila <= len(adn) - 4:  # Mutación hacia abajo
-                    for i in range(4):
-                        adn[fila + i][columna] = base_nitrogenada
-                elif 3 <= fila < len(adn):  # Mutación hacia arriba
-                    for i in range(4):
-                        adn[fila - i][columna] = base_nitrogenada
-                else:
-                    raise IndexError("La mutación excede los límites de la matriz verticalmente.")
-
+                adn = self._mutacion_vertical(adn, base_nitrogenada, fila, columna)
             else:
                 raise ValueError("Solo se aceptan las orientaciones 'H' (horizontal) o 'V' (vertical).")
 
-            # Convertir la matriz a lista de cadenas y retornar
             self.adn = ["".join(fila_adn) for fila_adn in adn]
             return self.adn
 
         except Exception as e:
             print(f"Ocurrió un error: {e}")
-            return None  # Manejo seguro: devuelve None si falla
+            return None  
+        
+    def _mutacion_horizontal(self, adn: list[list[str]], base_nitrogenada: str, fila: int, columna: int) -> list[list[str]]:
+        """
+        Realiza una mutación horizontal en la matriz ADN.
 
+        :param adn: Matriz ADN como lista de listas.
+        :param base_nitrogenada: Base nitrogenada para realizar la mutación.
+        :param fila: Fila inicial de la mutación.
+        :param columna: Columna inicial de la mutación.
+        :return: Matriz ADN mutada.
+        """
+        if 0 <= columna <= len(adn[fila]) - 4:  
+            for i in range(4):
+                adn[fila][columna + i] = base_nitrogenada
+            self.tipo_mutacion = "HORIZONTAL (DERECHA)"
+        elif 3 <= columna < len(adn[fila]):  
+            for i in range(4):
+                adn[fila][columna - i] = base_nitrogenada
+            self.tipo_mutacion = "HORIZONTAL (IZQUIERDA)"
+        else:
+            raise IndexError("La mutación excede los límites de la matriz horizontalmente.")
+        return adn
+
+    def _mutacion_vertical(self, adn: list[list[str]], base_nitrogenada: str, fila: int, columna: int) -> list[list[str]]:
+        """
+        Realiza una mutación vertical en la matriz ADN.
+
+        :param adn: Matriz ADN como lista de listas.
+        :param base_nitrogenada: Base nitrogenada para realizar la mutación.
+        :param fila: Fila inicial de la mutación.
+        :param columna: Columna inicial de la mutación.
+        :return: Matriz ADN mutada.
+        """
+        if 0 <= fila <= len(adn) - 4: 
+            for i in range(4):
+                adn[fila + i][columna] = base_nitrogenada
+            self.tipo_mutacion = "VERTICAL (ABAJO)"
+        elif 3 <= fila < len(adn):  
+            for i in range(4):
+                adn[fila - i][columna] = base_nitrogenada
+            self.tipo_mutacion = "VERTICAL (ARRIBA)"
+        else:
+            raise IndexError("La mutación excede los límites de la matriz verticalmente.")
+        return adn
 
 
 '''
@@ -217,6 +278,13 @@ class Virus(Mutador):
         self.tipo_mutacion = "Diagonal"
         
     def crear_mutante(self, base_nitrogenada: str, posicion_inicial: tuple[int, int]) -> list[str]:
+        """
+        Realiza una mutación diagonal en la matriz ADN.
+
+        :param base_nitrogenada: Base nitrogenada para realizar la mutación.
+        :param posicion_inicial: Coordenadas (fila, columna) de inicio de la mutación.
+        :return: Matriz ADN mutada como lista de cadenas.
+        """
         try:
             fila, columna = posicion_inicial
             
@@ -247,3 +315,4 @@ class Virus(Mutador):
         
         except Exception as e:
             print(f"Ocurrió un error: {e}")
+            return None
